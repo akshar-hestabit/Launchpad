@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 from datetime import datetime
+from app import auth
+
+
 app = FastAPI()
 start_time  = datetime.now()
 
-
+app.include_router(auth.router)
 
 @app.get("/")
 def test():

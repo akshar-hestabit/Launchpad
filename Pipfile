@@ -7,6 +7,8 @@ name = "pypi"
 fastapi = "*"
 uvicorn = "*"
 datetime = "*"
+sqlalchemy = "*"
+passlib = "*"
 
 [dev-packages]
 
