@@ -9,6 +9,11 @@ uvicorn = "*"
 datetime = "*"
 sqlalchemy = "*"
 passlib = "*"
+psycopg2-binary = "*"
+bcrypt = "<4.0.0"
+pydantic = {extras = ["email"], version = "*"}
+dotenv = "*"
+python-multipart = "*"
 
 [dev-packages]
 
