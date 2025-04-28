@@ -2,7 +2,7 @@ import redis
 from fastapi import FastAPI, HTTPException
 
 
-r = redis.Redis(host='localhost', port=6379,db=0, decode_response=True)
+r = redis.Redis(host='localhost', port=6379,db=0, decode_responses=True)
 app = FastAPI()
 
 CART_EXPIRATION_SECONDS = 60 * 30 
@@ -30,8 +30,8 @@ def remove_from_cart(user_id:int, product_id: int):
     r.hdel(f"cart:{user_id}", product_id)
     return {"message": "Product removed from cart"}
 
-def view_cart(user_id: int, product_id:int):
-    cart = r.hgetall(f"cart: {user_id}")
+def view_cart(user_id: int):
+    cart = r.hgetall(f"cart:{user_id}")
     if not cart:
         return {"message" :"Empty Cart"}
     return cart

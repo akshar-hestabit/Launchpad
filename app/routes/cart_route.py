@@ -1,11 +1,11 @@
 
 from fastapi import APIRouter,FastAPI, HTTPException
-from redis_file.carts import add_to_cart, remove_from_cart, clear_cart, view_cart
+from app.routes.redis_file.carts import add_to_cart, remove_from_cart, clear_cart, view_cart
 
 router = APIRouter()
 
 
-@router.get("/cart")
+@router.get("/cart/{user_id}")
 def get_cart(user_id: int):
     cart = view_cart(user_id)
     return {"cart":cart}
