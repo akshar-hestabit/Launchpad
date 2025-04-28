@@ -1,6 +1,7 @@
 
 
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy.sql import func
 from app.db import Base
 
 class User(Base):
@@ -25,3 +26,11 @@ class Products(Base):
 #    vendor_id = Column(Integer, nullable=False)
 
 
+class Wishlist(Base):
+    __tablename__ = "wishlist"
+    id = Column(Integer, primary_key=True, nullable=False, index=True)
+    name = Column(String, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    product_id  = Column(Integer, ForeignKey("products.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
