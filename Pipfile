@@ -16,6 +16,9 @@ dotenv = "*"
 python-multipart = "*"
 elasticsearch = "*"
 redis = "*"
+stripe = "*"
+paypalrestsdk = "*"
+python-dotenv = "*"
 
 [dev-packages]
 

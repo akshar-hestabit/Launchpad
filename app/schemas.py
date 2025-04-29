@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, EmailStr 
 from typing import Literal
-
+from datetime import datetime
 #this comes from a frontend post signup request
 #validates username, email and password are of correct type
 class UserCreate(BaseModel):
@@ -44,9 +44,36 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     pass
-class ProductOut(ProductBase):
+class ProductOut(BaseModel):
     id: int
-    class Config:
-        orm_mode = True 
+    name: str
+    description: str
+    price: float
+    quantity: int
+    category: str
+    brand: str
+    vendor: str
+
+    def to_dict(self):
+        return self.model_dump()
+    
+
 class ProductUpdate(ProductBase):
     pass
+
+class OrderCreate(BaseModel):
+    user_id: int
+    total_price: float
+    payment_method: str
+    status: str | None = "PENDING"
+
+class OrderOut(BaseModel):
+    id: int
+    user_id: int
+    total_price: float
+    status: str
+    created_at: datetime
+    payment_method: str | None = None
+
+    class Config:
+        from_attributes = True
