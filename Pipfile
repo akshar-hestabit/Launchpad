@@ -9,16 +9,17 @@ uvicorn = "*"
 datetime = "*"
 sqlalchemy = "*"
 passlib = "*"
-psycopg2-binary = "*"
 bcrypt = "<4.0.0"
-pydantic = {extras = ["email"], version = "*"}
+pydantic = {extras = ["email"] }
 dotenv = "*"
 python-multipart = "*"
-elasticsearch = "*"
+elasticsearch = "==8.11.1"
 redis = "*"
 stripe = "*"
 paypalrestsdk = "*"
 python-dotenv = "*"
+psycopg2-binary = "*"
+alembic = "*"
 
 [dev-packages]
 

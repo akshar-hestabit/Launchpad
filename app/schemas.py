@@ -1,28 +1,25 @@
-#this is for pydantic schemas or that can be used for data validation
-
 from pydantic import BaseModel, EmailStr 
 from typing import Literal
 from datetime import datetime
-#this comes from a frontend post signup request
-#validates username, email and password are of correct type
+
+# -------- User Schemas -------- #
+
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
     password: str
-    role: Literal["admin", "vendor", "customer"] #this is a string but can only be one of these values
+    role: Literal["admin", "vendor", "customer"]
 
-#we dont need to return password to frontend
-#orm_mode = True allows converting from SQLALchemy objects to dict
 class UserOut(BaseModel):
     id: int
     username: str
     email: EmailStr
     role: str
+
     model_config = {
         "from_attributes": True
     }
-#this is for token generation
-#sent to frontend to store for auth 
+
 class Token(BaseModel):
     access_token: str
     token_type: str 
@@ -30,36 +27,68 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: str | None = None
 
-class ProductBase(BaseModel):
-    
-    id: int
-    name : str
-    description: str | None = None
-    price:float
-    quantity: int
-    category: str
-    brand: str | None = None
-    vendor: str
 
+# -------- Category, Brand, Vendor Nested Schemas -------- #
+
+class CategoryOut(BaseModel):
+    id: int
+    name: str
+
+    model_config = {
+        "from_attributes": True
+    }
+
+class BrandOut(BaseModel):
+    id: int
+    name: str
+
+    model_config = {
+        "from_attributes": True
+    }
+
+class VendorOut(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+# -------- Product Schemas -------- #
+
+class ProductBase(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    price: float
+    quantity: int
+    category_id: int
+    brand: str | None = None
 
 class ProductCreate(ProductBase):
     pass
+
+class ProductUpdate(ProductBase):
+    pass
+
 class ProductOut(BaseModel):
     id: int
     name: str
     description: str
     price: float
     quantity: int
-    category: str
-    brand: str
-    vendor: str
+    category: CategoryOut      # changed from category_id: str
+    brand: BrandOut            # changed from brand: Optional[str]
+    vendor: VendorOut          # added vendor field
 
-    def to_dict(self):
-        return self.model_dump()
-    
+    model_config = {
+        "from_attributes": True
+    }
 
-class ProductUpdate(ProductBase):
-    pass
+
+# -------- Order Schemas -------- #
 
 class OrderCreate(BaseModel):
     user_id: int
@@ -75,5 +104,6 @@ class OrderOut(BaseModel):
     created_at: datetime
     payment_method: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }

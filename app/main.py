@@ -2,33 +2,46 @@ from fastapi import FastAPI
 from datetime import datetime
 from app import auth, models
 from app.db import engine, Base
-from app.routes import users, dashboard, products, cart_route, stripe_payment, stripe_webhook, paypal_payment, paypal_webhook
-
-
+from app.routes import (
+    users, dashboard, products, cart_route,
+    stripe_payment, stripe_webhook,
+    paypal_payment, paypal_webhook
+)
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from elasticsearch import Elasticsearch
+
+# Initialize FastAPI app
 app = FastAPI()
+
+# Allow all origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # allow all origins for now
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-ELASTICSEARCH_URL = "http://localhost:9200"
-from elasticsearch import Elasticsearch
-es = Elasticsearch(ELASTICSEARCH_URL)
-INDEX_NAME  = "products"
+# Create database tables
 models.Base.metadata.create_all(bind=engine)
 
+# Elasticsearch configuration
+ELASTICSEARCH_URL = "http://localhost:9200"
+INDEX_NAME = "products"
+es = Elasticsearch(ELASTICSEARCH_URL)
 
 start_time = datetime.now()
 
+# Initialize Elasticsearch index
 def init_elasticsearch():
     try:
+        if not es.ping():
+            print("❌ Could not connect to Elasticsearch")
+            return
+
         if not es.indices.exists(index=INDEX_NAME):
-            # For Elasticsearch 7.x and newer
             body = {
                 "settings": {
                     "number_of_shards": 1,
@@ -47,19 +60,14 @@ def init_elasticsearch():
                     }
                 }
             }
-            
-            # This is the proper way to create an index in newer Elasticsearch versions
             es.indices.create(index=INDEX_NAME, body=body)
             print(f"✅ Created Elasticsearch index: {INDEX_NAME}")
         else:
             print(f"ℹ️ Elasticsearch index '{INDEX_NAME}' already exists.")
     except Exception as e:
-        print(f"❌ Error initializing Elasticsearch: {e}")
-        # Add more detailed error info
-        print(f"Error details: {str(e)}")
+        print(f"❌ Error initializing Elasticsearch: {str(e)}")
 
-
-# FastAPI Startup Event
+# Run on application startup
 @app.on_event("startup")
 async def startup_event():
     print("🚀 Starting application...")
@@ -67,6 +75,7 @@ async def startup_event():
 
 # ========== Routes ==========
 
+# API routers
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(dashboard.router)
@@ -77,6 +86,7 @@ app.include_router(stripe_webhook.router)
 app.include_router(paypal_payment.router)
 app.include_router(paypal_webhook.router)
 
+# Health check endpoints
 @app.get("/")
 def root(): 
     return {"message": "This is an API for health check"}
@@ -91,11 +101,7 @@ def health_check():
         "started at": start_time
     }
 
-
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
-# Mount the frontend directory
+# Serve frontend static HTML pages
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 @app.get("/login")

@@ -7,11 +7,11 @@ WORKDIR /app
 # Install pipenv
 RUN pip install pipenv
 
-# Copy Pipfile and Pipfile.lock to container
+
 COPY Pipfile .
 COPY Pipfile.lock .
 
-# Install dependencies using pipenv directly into the container’s system Python
+# Install dependencies using pipenv
 RUN pipenv install --system --deploy
 
 # Copy the app code
@@ -19,6 +19,7 @@ COPY ./app ./app
 
 # Expose the FastAPI default port
 EXPOSE 8000
+EXPOSE 9200
 
 # Run the FastAPI app
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import status
 router  = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+load_dotenv()
 
 def get_db():
     database = db.SessionLocal()
@@ -41,7 +41,7 @@ def signup(user: schemas.UserCreate, database: Session = Depends(get_db)):
     database.refresh(new_user)
     return new_user
 
-load_dotenv()
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -68,6 +68,11 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
     if not user or not pwd_context.verify(form_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    
+    # Debug prints
+    # print(f"SECRET_KEY type: {type(SECRET_KEY)}")
+    # print(f"SECRET_KEY exists: {SECRET_KEY is not None}")
+    # print(f"SECRET_KEY length: {len(SECRET_KEY) if SECRET_KEY else 'N/A'}")
     
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
