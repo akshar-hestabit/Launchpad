@@ -20,6 +20,7 @@ paypalrestsdk = "*"
 python-dotenv = "*"
 psycopg2-binary = "*"
 alembic = "*"
+reportlab = "*"
 
 [dev-packages]
 

@@ -48,7 +48,7 @@ def search_products(
     if brand:
         filter_clauses.append({"term": {"brand.keyword": brand}})
 
-    # ✅ Correct structure: wrap in "bool"
+    #  wrap in "bool"
     query = {
         "bool": {
             "must": must_clauses,
@@ -56,7 +56,6 @@ def search_products(
         }
     }
 
-    # ✅ Use `query=` (not `body=`)
     res = es.search(index=INDEX_NAME, body={"query": query})
 
     hits = res["hits"]["hits"]
@@ -87,9 +86,8 @@ def add_new_product(product: schemas.ProductCreate, db: Session=Depends(get_db))
         "description": new_product.description,
         "price": new_product.price,
         "quantity": new_product.quantity,
-        "category": new_product.category,
+        "category": new_product.category_id,
         "brand": new_product.brand,
-        "vendor": new_product.vendor
     }
     
     # Index in Elasticsearch
@@ -122,7 +120,6 @@ def update_product(
         "quantity": product.quantity,
         "category": product.category,
         "brand": product.brand,
-        "vendor": product.vendor
     }
     
     # Index in Elasticsearch - fixed variable name from existing_product to product
@@ -144,7 +141,7 @@ def delete_by_id(product_id: int, db: Session=Depends(get_db)):
     try:
         es.delete(index=INDEX_NAME, id=product_id)
     except Exception:
-        # If product doesn't exist in ES, just continue
         pass
+        # If product doesn't exist in ES, just continue
     
     return {"message": f"Product with id {product_id} deleted successfully"}

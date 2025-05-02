@@ -5,7 +5,7 @@ from app.db import engine, Base
 from app.routes import (
     users, dashboard, products, cart_route,
     stripe_payment, stripe_webhook,
-    paypal_payment, paypal_webhook
+    paypal_payment, paypal_webhook, order_management, invoice
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -54,9 +54,8 @@ def init_elasticsearch():
                         "description": {"type": "text"},
                         "price": {"type": "float"},
                         "quantity": {"type": "integer"},
-                        "category": {"type": "keyword"},
-                        "brand": {"type": "keyword"},
-                        "vendor": {"type": "keyword"}
+                        "category_id": {"type": "integer"},
+                        "brand": {"type": "keyword"}
                     }
                 }
             }
@@ -85,7 +84,8 @@ app.include_router(stripe_payment.router, prefix="/stripe")
 app.include_router(stripe_webhook.router)
 app.include_router(paypal_payment.router)
 app.include_router(paypal_webhook.router)
-
+app.include_router(order_management.router)
+app.include_router(invoice.router)
 # Health check endpoints
 @app.get("/")
 def root(): 
@@ -131,3 +131,4 @@ async def serve_checkout_page():
 @app.get("/orders")
 async def serve_orders_page():
     return FileResponse("frontend/orders.html")
+
