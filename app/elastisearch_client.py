@@ -1,2 +1,4 @@
 ELASTICSEARCH_URL = "http://localhost:9200"
-PRODUCT_INDEX = "products"
+from elasticsearch import Elasticsearch
+es = Elasticsearch(ELASTICSEARCH_URL)
+INDEX_NAME  = "products"

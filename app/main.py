@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from datetime import datetime
 from app import auth, models
-from app.db import engine, Base
+from app.db import engine, SessionLocal
 from app.routes import (
     users, dashboard, products, cart_route,
     stripe_payment, stripe_webhook,
@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from elasticsearch import Elasticsearch
+from sqlalchemy.orm import Session
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -66,15 +67,31 @@ def init_elasticsearch():
     except Exception as e:
         print(f"❌ Error initializing Elasticsearch: {str(e)}")
 
+# Reindex products into Elasticsearch
+def reindex_products(db: Session):
+    products = db.query(models.Products).all()
+    for product in products:
+        es.index(index=INDEX_NAME, id=product.id, document={
+            "name": product.name,
+            "description": product.description,
+            "price": product.price,
+            "quantity": product.quantity,
+            "category_id": product.category_id,  # ✅ Fix: Serialize ID instead of object
+            "brand": product.brand
+        })
+    print(f"🔄 Reindexed {len(products)} products into Elasticsearch")
+
 # Run on application startup
 @app.on_event("startup")
 async def startup_event():
     print("🚀 Starting application...")
     init_elasticsearch()
+    db = SessionLocal()
+    reindex_products(db)
+    db.close()
 
 # ========== Routes ==========
 
-# API routers
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(dashboard.router)
@@ -86,6 +103,7 @@ app.include_router(paypal_payment.router)
 app.include_router(paypal_webhook.router)
 app.include_router(order_management.router)
 app.include_router(invoice.router)
+
 # Health check endpoints
 @app.get("/")
 def root(): 
@@ -131,4 +149,3 @@ async def serve_checkout_page():
 @app.get("/orders")
 async def serve_orders_page():
     return FileResponse("frontend/orders.html")
-
