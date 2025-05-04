@@ -21,6 +21,7 @@ python-dotenv = "*"
 psycopg2-binary = "*"
 alembic = "*"
 reportlab = "*"
+slowapi = "*"
 
 [dev-packages]
 

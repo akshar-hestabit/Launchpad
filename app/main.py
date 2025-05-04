@@ -1,20 +1,34 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from datetime import datetime
 from app import auth, models
 from app.db import engine, SessionLocal
 from app.routes import (
     users, dashboard, products, cart_route,
     stripe_payment, stripe_webhook,
-    paypal_payment, paypal_webhook, order_management, invoice
-)
+    paypal_payment, paypal_webhook, order_management, invoice)
+from app.utils import(otp, email)
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from elasticsearch import Elasticsearch
 from sqlalchemy.orm import Session
 
+# Initialize rate limiter with a global limit of 4 requests per minute
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["4/minute"]
+)
+
 # Initialize FastAPI app
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# Add SlowAPI middleware to enforce global limits
+app.add_middleware(SlowAPIMiddleware)
 
 # Allow all origins for development
 app.add_middleware(
@@ -36,6 +50,7 @@ es = Elasticsearch(ELASTICSEARCH_URL)
 start_time = datetime.now()
 
 # Initialize Elasticsearch index
+# (unchanged from your original file)
 def init_elasticsearch():
     try:
         if not es.ping():
@@ -44,10 +59,7 @@ def init_elasticsearch():
 
         if not es.indices.exists(index=INDEX_NAME):
             body = {
-                "settings": {
-                    "number_of_shards": 1,
-                    "number_of_replicas": 0
-                },
+                "settings": {"number_of_shards": 1, "number_of_replicas": 0},
                 "mappings": {
                     "properties": {
                         "id": {"type": "integer"},
@@ -68,6 +80,7 @@ def init_elasticsearch():
         print(f"❌ Error initializing Elasticsearch: {str(e)}")
 
 # Reindex products into Elasticsearch
+# (unchanged)
 def reindex_products(db: Session):
     products = db.query(models.Products).all()
     for product in products:
@@ -76,7 +89,7 @@ def reindex_products(db: Session):
             "description": product.description,
             "price": product.price,
             "quantity": product.quantity,
-            "category_id": product.category_id,  # ✅ Fix: Serialize ID instead of object
+            "category_id": product.category_id,
             "brand": product.brand
         })
     print(f"🔄 Reindexed {len(products)} products into Elasticsearch")
@@ -91,7 +104,7 @@ async def startup_event():
     db.close()
 
 # ========== Routes ==========
-
+app.include_router(otp.router)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(dashboard.router)
@@ -106,7 +119,7 @@ app.include_router(invoice.router)
 
 # Health check endpoints
 @app.get("/")
-def root(): 
+def root():
     return {"message": "This is an API for health check"}
 
 @app.get("/check")
